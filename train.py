@@ -15,6 +15,9 @@ import numpy as np                                      # NumPy库，用于数�
 import time                                             # Python中的时间相关功能
 import random                                           # Python中的随机数生成器
 
+from profiler.torch_profiler_hook import register_torch_profiler_hook
+from profiler.profiler import profiler
+
 def parse_args():
     """
     解析命令行参数
@@ -256,8 +259,13 @@ if __name__ == "__main__":
     
     # 创建学习率调度器
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epoch)
-    
+
+    register_torch_profiler_hook(model)  # ← 注册钩子
+    profiler.start()  # ← 启动 profiler
+
     # 开始训练
     train(model=model, optimizer=optimizer, train_loader=train_loader, \
           val_loader=val_loader, test_loader=test_loader, scheduler=scheduler, \
             args=args, exp_path=exp_path, tb_writer=tb_writer)
+    profiler.end()
+    profiler.save("profile.pkl")  # ← 保存结果
